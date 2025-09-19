@@ -94,7 +94,8 @@
     <div class="card">
       <header>
         <span class="badge">Formulario de registro</span>
-        <div class="title" aria-label="BMG">      
+        <div class="title" aria-label="BMG">
+          <!-- Banner con logo BMG: coloca el archivo en ./assets/bmg-banner.png o cambia la ruta abajo -->
           <img src="assets/bmg-banner.png" alt="BMG" class="logo-bmg"/>
         </div>
       </header>
@@ -274,13 +275,40 @@
   }
   function clearToast(){ toastEl.className = 'toast'; toastEl.textContent = ''; }
 
+  const SCREENS = [
+    'screen-employee',
+    'screen-ref',
+    'screen-list',
+    'screen-summary',
+    'screen-thanks' // <-- faltaba ocultar esta
+  ];
+
   function nav(target){
-    screenEmployee.classList.add('hidden');
-    screenRef.classList.add('hidden');
-    screenList.classList.add('hidden');
-    screenSummary.classList.add('hidden');
-    document.getElementById(target).classList.remove('hidden');
+    SCREENS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
+    document.getElementById(target)?.classList.remove('hidden');
+    // opcional: limpiar mensajes y subir al inicio
+    const toastEl = document.getElementById('toast');
+    if (toastEl){ toastEl.className = 'toast'; toastEl.textContent = ''; }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  document.getElementById('btnNewResponse')?.addEventListener('click', ()=>{
+  // limpia formulario del empleado
+  empNombre.value = '';
+  empCel.value = '';
+  empGrado.value = '';
+
+  // limpia lista de referidos y render
+  referidos = [];
+  renderList();
+  renderCards();
+
+  // navega a la primera pantalla (ya ocultará la de gracias)
+  nav('screen-employee');
+});
 
   // ======== Captura de empleado ========
   function getEmpleado(){
