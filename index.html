@@ -137,7 +137,7 @@
         <section id="screen-ref" class="hidden">
           <div class="grid cols-3">
             <div>
-              <label for="refNombre">Nombre del referido <span class="req" aria-hidden="true">*</span></label>
+              <label for="refNombre">Nombre del Subordinado <span class="req" aria-hidden="true">*</span></label>
               <input id="refNombre" type="text" placeholder="Nombre y apellidos" />
             </div>
             <div>
@@ -166,7 +166,7 @@
         <!-- Pantalla: Lista de Referidos -->
         <section id="screen-list" class="hidden">
           <div class="table-wrap">
-            <table aria-label="Lista de referidos">
+            <table aria-label="Lista de Subordinados">
               <thead>
                 <tr>
                   <th style="width:40%">Nombre</th>
@@ -197,7 +197,7 @@
             <button type="button" class="btn btn-add" id="navToRef3">+ Agregar Subordinado</button>
             <div style="display:flex; gap:10px; flex-wrap:wrap">
               <button type="button" class="btn btn-outline" id="editEmployeeFromList">Editar mis datos</button>
-              <button type="button" class="btn btn-outline" id="navToList3" disabled>Ver lista de referidos</button>
+              <button type="button" class="btn btn-outline" id="navToList3" disabled>Ver lista de Subordinados</button>
             </div>
             <button type="button" class="btn btn-primary" id="btnSubmitFromList">Enviar información</button>
           </div>
@@ -224,7 +224,7 @@
             <div class="help" id="summaryCounts"></div>
             <div style="display:flex; gap:10px; flex-wrap:wrap">
               <button type="button" class="btn btn-outline" id="summaryEditEmployee">Editar mis datos</button>
-              <button type="button" class="btn btn-outline" id="summaryEditRefs">Editar referidos</button>
+              <button type="button" class="btn btn-outline" id="summaryEditRefs">Editar Subordinados</button>
               <button type="button" class="btn btn-primary" id="btnConfirmSend">Confirmar y enviar</button>
             </div>
           </div>
@@ -350,8 +350,8 @@
     const cel = refCel.value.trim();
     const grado = refGrado.value;
 
-    if(!nombre || !cel || !grado){ showToast('Completa nombre, celular y grado del referido.', false); return; }
-    if(!/^\d{7,20}$/.test(cel)){ showToast('El celular del referido no es válido.', false); return; }
+    if(!nombre || !cel || !grado){ showToast('Completa nombre, celular y grado del Subordinado.', false); return; }
+    if(!/^\d{7,20}$/.test(cel)){ showToast('El celular del Subordinado no es válido.', false); return; }
 
     if(editIndex !== null){
       referidos[editIndex] = { nombre, cel, grado };
@@ -360,7 +360,7 @@
       btnAddRef.textContent = '+ Agregar Subordinado';
     } else {
       referidos.push({nombre, cel, grado});
-      showToast(`Referido agregado. Total: ${referidos.length}`);
+      showToast(`Subordinado agregado. Total: ${referidos.length}`);
     }
     clearRefForm();
   }
@@ -373,7 +373,7 @@
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.colSpan = 4; td.style.color = '#94a3b8';
-      td.textContent = 'No hay referidos agregados aún.';
+      td.textContent = 'No hay Subordinados agregados aún.';
       tr.appendChild(td); listBody.appendChild(tr);
       return;
     }
@@ -403,7 +403,7 @@
       renderList();
       if(currentIdx >= referidos.length) currentIdx = Math.max(0, referidos.length-1);
       renderCards();
-      showToast('Referido eliminado.');
+      showToast('Subordinados eliminado.');
     }
   });
 
@@ -418,7 +418,7 @@
   function renderCards(){
     if(!cardContent || !cardCounter) return;
     if(!referidos.length){
-      cardContent.innerHTML = '<div class="card-field">No hay referidos agregados aún.</div>';
+      cardContent.innerHTML = '<div class="card-field">No hay Subordinados agregados aún.</div>';
       cardCounter.textContent = '0 / 0';
       if(prevCard && nextCard){ prevCard.disabled = true; nextCard.disabled = true; }
       return;
@@ -493,7 +493,7 @@
       summaryBody.appendChild(tr);
     });
     const refs = referidos.length;
-    summaryCounts.textContent = `Se enviará 1 registro de empleado y ${refs} referido(s), total ${rows.length} fila(s).`;
+    summaryCounts.textContent = `Se enviará 1 registro de empleado y ${refs} Subordinado(s), total ${rows.length} fila(s).`;
     summaryNote.textContent = 'Revisa la información antes de confirmar el envío.' + (!ENDPOINT_URL ? ' (Recuerda configurar ENDPOINT_URL).' : '');
   }
 
@@ -603,8 +603,8 @@
     document.getElementById('empGrado').value='A2';
     referidos=[{nombre:'Bob', cel:'3001234567', grado:'B1'}];
     const rows=buildRowsForSend();
-    console.assert(rows.length===2, 'Debe generar 2 filas (empleado + 1 referido)');
-    console.assert(rows[0][0]==='Alice' && rows[1][3]==='Alice', 'El jefe del referido debe ser el empleado');
+    console.assert(rows.length===2, 'Debe generar 2 filas (empleado + 1 Subordinado)');
+    console.assert(rows[0][0]==='Alice' && rows[1][3]==='Alice', 'El jefe del Subordinado debe ser el empleado');
 
     // Test 3: orden de opciones de Grado BMG
     const optsEmp=[...document.querySelectorAll('#empGrado option')].slice(1).map(o=>o.textContent.trim());
@@ -619,8 +619,8 @@
     document.getElementById('empGrado').value='A3';
     referidos=[{nombre:'Dan', cel:'3001111111', grado:'B1'}, {nombre:'Eve', cel:'3002222222', grado:'B2'}];
     const rows2=buildRowsForSend();
-    console.assert(rows2.length===3, 'Debe generar 3 filas (empleado + 2 referidos)');
-    console.assert(rows2[1][3]==='Carol' && rows2[2][3]==='Carol', 'El jefe debe ser Carol en todos los referidos');
+    console.assert(rows2.length===3, 'Debe generar 3 filas (empleado + 2 Subordinados)');
+    console.assert(rows2[1][3]==='Carol' && rows2[2][3]==='Carol', 'El jefe debe ser Carol en todos los Subordinados');
 
     console.groupEnd();
   }
