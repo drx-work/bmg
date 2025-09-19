@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BMG · Registro de Empleados y Referidos</title>
+  <style>
+    :root{
+      --bg:#0f172a;          /* slate-900 */
+      --card:#0b1226;        /* slightly lighter for cards */
+      --ink:#e5e7eb;         /* gray-200 */
+      --muted:#94a3b8;       /* slate-400 */
+      --accent:#38bdf8;      /* sky-400 */
+      --accent-2:#22d3ee;    /* cyan-400 */
+      --danger:#ef4444;      /* red-500 */
+      --ok:#10b981;          /* emerald-500 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(56,189,248,.12), transparent 60%),
+                  radial-gradient(1200px 600px at 110% 10%, rgba(34,211,238,.10), transparent 60%),
+                  var(--bg);
+      color:var(--ink);
+    }
+    .wrap{max-width:980px; margin:clamp(12px,4vw,24px) auto; padding:clamp(12px,4vw,24px);} 
+    .card{background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(148,163,184,.15); border-radius:20px; box-shadow: 0 10px 30px rgba(0,0,0,.35); overflow:hidden}
+    header{
+      position:relative; aspect-ratio: 16/5; display:grid; place-items:center; background:linear-gradient(135deg, rgba(56,189,248,.2), rgba(34,211,238,.15));
+      border-bottom:1px solid rgba(148,163,184,.2);
+    }
+    .badge{position:absolute; inset:auto 16px 16px auto; padding:.35rem .6rem; border-radius:999px; font-size:.75rem; background:rgba(15,23,42,.6); color:#cbd5e1; border:1px solid rgba(148,163,184,.2)}
+    .title{display:flex; gap:10px; align-items:center}
+    .title .logo-bmg{width:min(520px, 80vw); height:auto; object-fit:contain; filter: drop-shadow(0 8px 24px rgba(34,211,238,.25));}
+
+    form{padding:clamp(16px,4vw,28px); display:grid; gap:20px}
+    .grid{display:grid; gap:16px}
+    @media (min-width:720px){
+      .grid.cols-2{grid-template-columns: 1fr 1fr}
+      .grid.cols-3{grid-template-columns: repeat(3, 1fr)}
+    }
+
+    label{font-weight:600; font-size:.95rem}
+    .req{color:var(--accent)}
+    input, select, button{width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(148,163,184,.25); background:#0b1226; color:var(--ink); outline:none}
+    input::placeholder{color:#94a3b8aa}
+    input:focus, select:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+
+    .table-wrap{overflow:auto; border:1px solid rgba(148,163,184,.15); border-radius:14px}
+    table{border-collapse:separate; border-spacing:0; width:100%; min-width:720px; background:#0a1022}
+    thead th{position:sticky; top:0; background:#0d142b; text-align:left; font-size:.9rem; padding:12px; color:#cbd5e1; border-bottom:1px solid rgba(148,163,184,.2)}
+    tbody td{padding:10px; border-bottom:1px dashed rgba(148,163,184,.12)}
+    tbody tr:last-child td{border-bottom:none}
+    .row-actions{display:flex; gap:8px}
+
+    .btn{cursor:pointer; font-weight:600}
+    .btn-add{background:linear-gradient(135deg, var(--accent), var(--accent-2)); border:none}
+    .btn-outline{background:transparent; border:1px solid rgba(148,163,184,.35)}
+    .btn-danger{background:transparent; color:var(--danger); border:1px solid rgba(239,68,68,.5)}
+    .btn-primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); border:none}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+
+    .help{color:var(--muted); font-size:.85rem}
+    .footer{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+
+    .toast{display:none; margin:0 0 12px; padding:12px 14px; border-radius:12px; font-weight:600}
+    .toast.ok{display:block; background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.35); color:#a7f3d0}
+    .toast.err{display:block; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.4); color:#fecaca}
+    .hidden{display:none}
+    /* Vista de tarjetas para móviles */
+    .cards-wrap{display:none}
+    .card-panel{border:1px solid rgba(148,163,184,.15); border-radius:14px; padding:16px; background:#0a1022; min-height:140px}
+    .card-field{margin:8px 0}
+    .card-label{color:var(--muted); font-size:.85rem}
+    .card-value{font-weight:600}
+    .pager{display:flex; align-items:center; gap:10px}
+    @media (max-width:719px){
+      .table-wrap{display:none}
+      .cards-wrap{display:block}
+    }
+
+    /* Overlay de carga */
+    .loading-overlay{position:fixed; inset:0; background:rgba(15,23,42,.6); display:none; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(2px)}
+    .loading-overlay.show{display:flex}
+    .loading-wrap{display:flex; flex-direction:column; align-items:center; gap:12px}
+    .spinner{width:64px; height:64px; border-radius:50%; border:6px solid rgba(148,163,184,.3); border-top-color:var(--accent); animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{color:#cbd5e1; font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <span class="badge">Formulario de registro</span>
+        <div class="title" aria-label="BMG">
+          <!-- Banner con logo BMG: coloca el archivo en ./assets/bmg-banner.png o cambia la ruta abajo -->
+          <img src="assets/bmg-banner.png" alt="BMG" class="logo-bmg"/>
+        </div>
+      </header>
+
+      <form id="bmgForm" novalidate>
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+        <!-- Pantalla: Empleado -->
+        <section id="screen-employee">
+          <div class="grid cols-3">
+            <div>
+              <label for="empNombre">Nombre <span class="req" aria-hidden="true">*</span></label>
+              <input id="empNombre" name="empNombre" type="text" placeholder="Nombre y apellidos" required />
+            </div>
+            <div>
+              <label for="empCel">Número celular <span class="req" aria-hidden="true">*</span></label>
+              <input id="empCel" name="empCel" type="tel" inputmode="numeric" placeholder="Ej. 3001234567" required pattern="\d{7,20}" data-numeric />
+              <div class="help">Solo números y símbolos + ( ) - · mín. 7 caracteres</div>
+            </div>
+            <div>
+              <label for="empGrado">Grado BMG <span class="req" aria-hidden="true">*</span></label>
+              <select id="empGrado" name="empGrado" required>
+                <option value="" disabled selected>Seleccione un grado…</option>
+                <option>A2</option>
+                <option>A3</option>
+                <option>B1</option>
+                <option>B2</option>
+              </select>
+            </div>
+          </div>
+          <div class="footer" style="margin-top:12px">
+            <button type="button" class="btn btn-add" id="navToRef">+ Agregar Referido</button>
+            <button type="button" class="btn btn-outline" id="navToList">Ver lista de referidos</button>
+            <button type="button" class="btn btn-primary" id="btnSubmitFromEmp">Enviar información</button>
+          </div>
+        </section>
+
+        <!-- Pantalla: Captura de Referido -->
+        <section id="screen-ref" class="hidden">
+          <div class="grid cols-3">
+            <div>
+              <label for="refNombre">Nombre del referido <span class="req" aria-hidden="true">*</span></label>
+              <input id="refNombre" type="text" placeholder="Nombre y apellidos" />
+            </div>
+            <div>
+              <label for="refCel">Número celular <span class="req" aria-hidden="true">*</span></label>
+              <input id="refCel" type="tel" inputmode="numeric" placeholder="Ej. 3009876543" pattern="\d{7,20}" data-numeric />
+            </div>
+            <div>
+              <label for="refGrado">Grado BMG <span class="req" aria-hidden="true">*</span></label>
+              <select id="refGrado">
+                <option value="" disabled selected>Seleccione un grado…</option>
+                <option>A2</option>
+                <option>A3</option>
+                <option>B1</option>
+                <option>B2</option>
+              </select>
+            </div>
+          </div>
+          <div class="footer" style="margin-top:12px">
+            <button type="button" class="btn btn-add" id="btnAddRef">+ Agregar Referido</button>
+            <button type="button" class="btn btn-outline" id="navToList2">Ver lista de referidos</button>
+            <button type="button" class="btn btn-outline" id="editEmployeeFromRef">Editar mis datos</button>
+            <button type="button" class="btn btn-primary" id="btnSubmitFromRef">Enviar información</button>
+          </div>
+        </section>
+
+        <!-- Pantalla: Lista de Referidos -->
+        <section id="screen-list" class="hidden">
+          <div class="table-wrap">
+            <table aria-label="Lista de referidos">
+              <thead>
+                <tr>
+                  <th style="width:40%">Nombre</th>
+                  <th style="width:30%">Número celular</th>
+                  <th style="width:20%">Grado BMG</th>
+                  <th style="width:10%">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="listBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Vista tarjetas para pantallas pequeñas -->
+          <div class="cards-wrap">
+            <div class="card-panel" id="cardsArea">
+              <div id="cardContent"></div>
+            </div>
+            <div class="footer" style="margin-top:12px; justify-content:center">
+              <div class="pager">
+                <button type="button" class="btn btn-outline" id="prevCard">◀</button>
+                <span id="cardCounter" class="help">0 / 0</span>
+                <button type="button" class="btn btn-outline" id="nextCard">▶</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer" style="margin-top:12px">
+            <button type="button" class="btn btn-add" id="navToRef3">+ Agregar Referido</button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap">
+              <button type="button" class="btn btn-outline" id="editEmployeeFromList">Editar mis datos</button>
+              <button type="button" class="btn btn-outline" id="navToList3" disabled>Ver lista de referidos</button>
+            </div>
+            <button type="button" class="btn btn-primary" id="btnSubmitFromList">Enviar información</button>
+          </div>
+        </section>
+
+        <!-- Pantalla: Resumen antes de enviar (opcional) -->
+        <section id="screen-summary" class="hidden">
+          <h3 style="margin:0 0 6px">Resumen</h3>
+          <p class="help" id="summaryNote">Revisa la información antes de confirmar el envío.</p>
+          <div class="table-wrap">
+            <table aria-label="Resumen de envío">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Celular</th>
+                  <th>Grado BMG</th>
+                  <th>Jefe</th>
+                </tr>
+              </thead>
+              <tbody id="summaryBody"></tbody>
+            </table>
+          </div>
+          <div class="footer" style="margin-top:12px">
+            <div class="help" id="summaryCounts"></div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap">
+              <button type="button" class="btn btn-outline" id="summaryEditEmployee">Editar mis datos</button>
+              <button type="button" class="btn btn-outline" id="summaryEditRefs">Editar referidos</button>
+              <button type="button" class="btn btn-primary" id="btnConfirmSend">Confirmar y enviar</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Pantalla: Gracias -->
+        <section id="screen-thanks" class="hidden">
+          <div style="text-align:center; padding:24px 12px">
+            <h3 style="margin:0 0 8px">¡Gracias por tu apoyo!</h3>
+            <p class="help">Tu información se ha enviado correctamente.</p>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:12px">
+              <button type="button" class="btn btn-primary" id="btnNewResponse">Volver a enviar una nueva respuesta</button>
+            </div>
+          </div>
+        </section>
+      </form>
+    </div>
+  </div>
+
+  <!-- Overlay de carga (fuera del form para cubrir toda la vista) -->
+  <div id="loading" class="loading-overlay" aria-live="assertive" aria-busy="true">
+    <div class="loading-wrap">
+      <div class="spinner" role="img" aria-label="Cargando"></div>
+      <div class="loading-text">Enviando información…</div>
+    </div>
+  </div>
+
+  <script>
+  // ===================== CONFIGURACIÓN =====================
+  const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbxbwxpa-PW7PaESBks2_guYxUd9Kial-vmU13I_OpxtN3HdegwQkAXrvspXgScaRx1j/exec"; // URL de Apps Script (Web App)
+  const SHOW_SUCCESS_ON_NOCORS = true;
+  const RUN_TESTS = false; // cambia a true para ejecutar pruebas en la consola
+
+  // ===================== ESTADO =====================
+  const toastEl = document.getElementById('toast');
+  let referidos = [];
+  let editIndex = null; // índice que se está editando (null = modo agregar)
+
+  // Pantallas
+  const screenEmployee = document.getElementById('screen-employee');
+  const screenRef = document.getElementById('screen-ref');
+  const screenList = document.getElementById('screen-list');
+  const screenSummary = document.getElementById('screen-summary');
+
+  function showToast(msg, ok=true){
+    toastEl.textContent = msg;
+    toastEl.className = 'toast ' + (ok ? 'ok' : 'err');
+  }
+  function clearToast(){ toastEl.className = 'toast'; toastEl.textContent = ''; }
+
+  function nav(target){
+    screenEmployee.classList.add('hidden');
+    screenRef.classList.add('hidden');
+    screenList.classList.add('hidden');
+    screenSummary.classList.add('hidden');
+    document.getElementById(target).classList.remove('hidden');
+  }
+
+  // ======== Captura de empleado ========
+  function getEmpleado(){
+    return {
+      nombre: document.getElementById('empNombre').value.trim(),
+      cel: document.getElementById('empCel').value.trim(),
+      grado: document.getElementById('empGrado').value
+    }
+  }
+  function validateEmpleado(){
+    const e = getEmpleado();
+    const celOk = /^\d{7,20}$/.test(e.cel);
+    if(!e.nombre){ showToast('El nombre del empleado es obligatorio.', false); return false; }
+    if(!celOk){ showToast('El celular del empleado no es válido.', false); return false; }
+    if(!e.grado){ showToast('Selecciona el grado BMG del empleado.', false); return false; }
+    return true;
+  }
+
+  // ======== Captura de referido ========
+  const refNombre = document.getElementById('refNombre');
+  const refCel = document.getElementById('refCel');
+  const refGrado = document.getElementById('refGrado');
+  const btnAddRef = document.getElementById('btnAddRef');
+
+  function clearRefForm(){ refNombre.value=''; refCel.value=''; refGrado.value=''; }
+
+  function startEdit(idx){
+    editIndex = idx;
+    const r = referidos[idx];
+    refNombre.value = r.nombre;
+    refCel.value = r.cel;
+    refGrado.value = r.grado;
+    btnAddRef.textContent = 'Guardar cambios';
+    nav('screen-ref');
+  }
+
+  function addRefFromForm(){
+    const nombre = refNombre.value.trim();
+    const cel = refCel.value.trim();
+    const grado = refGrado.value;
+
+    if(!nombre || !cel || !grado){ showToast('Completa nombre, celular y grado del referido.', false); return; }
+    if(!/^\d{7,20}$/.test(cel)){ showToast('El celular del referido no es válido.', false); return; }
+
+    if(editIndex !== null){
+      referidos[editIndex] = { nombre, cel, grado };
+      showToast('Referido actualizado.');
+      editIndex = null;
+      btnAddRef.textContent = '+ Agregar Referido';
+    } else {
+      referidos.push({nombre, cel, grado});
+      showToast(`Referido agregado. Total: ${referidos.length}`);
+    }
+    clearRefForm();
+  }
+
+  // ======== Lista (tabla + tarjetas) ========
+  const listBody = document.getElementById('listBody');
+  function renderList(){
+    listBody.innerHTML = '';
+    if(!referidos.length){
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 4; td.style.color = '#94a3b8';
+      td.textContent = 'No hay referidos agregados aún.';
+      tr.appendChild(td); listBody.appendChild(tr);
+      return;
+    }
+    referidos.forEach((r, idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.nombre}</td>
+        <td>${r.cel}</td>
+        <td>${r.grado}</td>
+        <td class="row-actions">
+          <button type="button" class="btn btn-outline" data-edit="${idx}">Editar</button>
+          <button type="button" class="btn btn-danger" data-del="${idx}">Eliminar</button>
+        </td>`;
+      listBody.appendChild(tr);
+    });
+  }
+  listBody?.addEventListener('click', (e)=>{
+    const editBtn = e.target.closest('[data-edit]');
+    if(editBtn){
+      const idx = Number(editBtn.getAttribute('data-edit'));
+      startEdit(idx); return;
+    }
+    const delBtn = e.target.closest('[data-del]');
+    if(delBtn){
+      const idx = Number(delBtn.getAttribute('data-del'));
+      referidos.splice(idx,1);
+      renderList();
+      if(currentIdx >= referidos.length) currentIdx = Math.max(0, referidos.length-1);
+      renderCards();
+      showToast('Referido eliminado.');
+    }
+  });
+
+  // ---- Tarjetas responsivas ----
+  let currentIdx = 0;
+  const cardContent = document.getElementById('cardContent');
+  const cardCounter = document.getElementById('cardCounter');
+  const prevCard = document.getElementById('prevCard');
+  const nextCard = document.getElementById('nextCard');
+  const cardsWrap = document.querySelector('.cards-wrap');
+
+  function renderCards(){
+    if(!cardContent || !cardCounter) return;
+    if(!referidos.length){
+      cardContent.innerHTML = '<div class="card-field">No hay referidos agregados aún.</div>';
+      cardCounter.textContent = '0 / 0';
+      if(prevCard && nextCard){ prevCard.disabled = true; nextCard.disabled = true; }
+      return;
+    }
+    if(currentIdx >= referidos.length) currentIdx = referidos.length - 1;
+    if(currentIdx < 0) currentIdx = 0;
+    const r = referidos[currentIdx];
+    cardContent.innerHTML = `
+      <div class="card-field"><div class="card-label">Nombre</div><div class="card-value">${r.nombre}</div></div>
+      <div class="card-field"><div class="card-label">Celular</div><div class="card-value">${r.cel}</div></div>
+      <div class="card-field"><div class="card-label">Grado BMG</div><div class="card-value">${r.grado}</div></div>
+      <div style="margin-top:8px; display:flex; gap:8px">
+        <button type="button" class="btn btn-outline" id="editCard">Editar</button>
+        <button type="button" class="btn btn-danger" id="delCard">Eliminar</button>
+      </div>
+    `;
+    cardCounter.textContent = (currentIdx+1) + ' / ' + referidos.length;
+    if(prevCard && nextCard){
+      prevCard.disabled = (currentIdx===0);
+      nextCard.disabled = (currentIdx===referidos.length-1);
+    }
+    const delBtn = document.getElementById('delCard');
+    if(delBtn){
+      delBtn.onclick = ()=>{
+        referidos.splice(currentIdx,1);
+        if(currentIdx>0 && currentIdx>=referidos.length) currentIdx--;
+        renderList();
+        renderCards();
+        showToast('Referido eliminado.');
+      }
+    }
+    const editBtn = document.getElementById('editCard');
+    if(editBtn){ editBtn.onclick = ()=> startEdit(currentIdx); }
+  }
+
+  prevCard?.addEventListener('click', ()=>{ currentIdx--; renderCards(); });
+  nextCard?.addEventListener('click', ()=>{ currentIdx++; renderCards(); });
+
+  // Gestos táctiles (deslizar)
+  let startX = null;
+  cardsWrap?.addEventListener('touchstart', (e)=>{ startX = e.changedTouches[0].clientX; }, {passive:true});
+  cardsWrap?.addEventListener('touchend', (e)=>{
+    if(startX==null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    if(Math.abs(dx) > 40){
+      if(dx < 0 && currentIdx < referidos.length-1){ currentIdx++; }
+      else if(dx > 0 && currentIdx > 0){ currentIdx--; }
+      renderCards();
+    }
+    startX = null;
+  }, {passive:true});
+
+  // ======== RESUMEN ========
+  const summaryBody = document.getElementById('summaryBody');
+  const summaryCounts = document.getElementById('summaryCounts');
+  const summaryNote = document.getElementById('summaryNote');
+
+  function buildRowsForSend(){
+    const emp = getEmpleado();
+    const rows = [];
+    rows.push([emp.nombre, emp.cel, emp.grado, '']);
+    for(const r of referidos){ rows.push([r.nombre, r.cel, r.grado, emp.cel]); }
+    return rows;
+  }
+
+  function renderSummary(){
+    const rows = buildRowsForSend();
+    summaryBody.innerHTML = '';
+    rows.forEach(arr=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${arr[0]}</td><td>${arr[1]}</td><td>${arr[2]}</td><td>${arr[3]}</td>`;
+      summaryBody.appendChild(tr);
+    });
+    const refs = referidos.length;
+    summaryCounts.textContent = `Se enviará 1 registro de empleado y ${refs} referido(s), total ${rows.length} fila(s).`;
+    summaryNote.textContent = 'Revisa la información antes de confirmar el envío.' + (!ENDPOINT_URL ? ' (Recuerda configurar ENDPOINT_URL).' : '');
+  }
+
+  // ======== Envío ========
+  function setSending(flag){
+    const overlay = document.getElementById('loading');
+    if(overlay){ overlay.classList.toggle('show', flag); }
+
+    const ids = ['btnConfirmSend','btnSubmitFromEmp','btnSubmitFromRef','btnSubmitFromList'];
+    ids.forEach(id=>{
+      const b = document.getElementById(id);
+      if(!b) return;
+      if(flag){
+        b.dataset.prevText = b.textContent;
+        b.disabled = true;
+        b.textContent = 'Enviando…';
+      }else{
+        b.disabled = false;
+        b.textContent = b.dataset.prevText || (id==='btnConfirmSend' ? 'Confirmar y enviar' : 'Enviar información');
+      }
+    });
+  }
+
+  async function sendAll(){
+    clearToast();
+    if(!validateEmpleado()) { nav('screen-employee'); return; }
+
+    const rows = buildRowsForSend();
+
+    if(!ENDPOINT_URL){ showToast('Configura el ENDPOINT_URL (Apps Script) para enviar.', false); return; }
+
+    try{
+      setSending(true);
+      await fetch(ENDPOINT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ rows }),
+        mode: 'no-cors'
+      });
+      showToast('¡Respuesta enviada!');
+      // Reset general
+      document.getElementById('empNombre').value='';
+      document.getElementById('empCel').value='';
+      document.getElementById('empGrado').value='';
+      referidos = [];
+      clearRefForm();
+      renderList();
+      renderCards();
+      nav('screen-thanks');
+    }catch(err){
+      console.error(err);
+      showToast('No se pudo enviar. Revisa el endpoint o la conexión.', false);
+    }finally{
+      setSending(false);
+    }
+  }
+
+  // ======== Navegación / Acciones ========
+  document.getElementById('navToRef').onclick = ()=>{ clearRefForm(); editIndex=null; btnAddRef.textContent = '+ Agregar Referido'; nav('screen-ref'); };
+  document.getElementById('navToList').onclick = ()=>{ renderList(); renderCards(); nav('screen-list'); };
+
+  btnAddRef.onclick = addRefFromForm;
+  document.getElementById('navToList2').onclick = ()=>{ renderList(); renderCards(); nav('screen-list'); };
+
+  document.getElementById('navToRef3').onclick = ()=>{ clearRefForm(); editIndex=null; btnAddRef.textContent = '+ Agregar Referido'; nav('screen-ref'); };
+  document.getElementById('editEmployeeFromRef').onclick = ()=> nav('screen-employee');
+  document.getElementById('editEmployeeFromList').onclick = ()=> nav('screen-employee');
+
+  function openSummary(){
+    if(!validateEmpleado()) { nav('screen-employee'); return; }
+    // Envío directo y luego pantalla de gracias
+    sendAll();
+  }
+  document.getElementById('btnSubmitFromEmp')?.addEventListener('click', openSummary);
+  document.getElementById('btnSubmitFromRef')?.addEventListener('click', openSummary);
+  document.getElementById('btnSubmitFromList')?.addEventListener('click', openSummary);
+
+  // Acciones en resumen (si se usa)
+  document.getElementById('summaryEditEmployee').onclick = ()=> nav('screen-employee');
+  document.getElementById('summaryEditRefs').onclick = ()=> { renderList(); renderCards(); nav('screen-list'); };
+  document.getElementById('btnConfirmSend').onclick = sendAll;
+
+  // Nueva respuesta
+  document.getElementById('btnNewResponse')?.addEventListener('click', ()=>{
+    document.getElementById('empNombre').value='';
+    document.getElementById('empCel').value='';
+    document.getElementById('empGrado').value='';
+    referidos = [];
+    clearRefForm();
+    renderList();
+    renderCards();
+    nav('screen-employee');
+  });
+
+  // ===================== TESTS =====================
+  function runTests(){
+    console.group('BMG Form tests');
+    // Test 1: validateEmpleado falla con campos vacíos
+    document.getElementById('empNombre').value='';
+    document.getElementById('empCel').value='';
+    document.getElementById('empGrado').value='';
+    console.assert(!validateEmpleado(), 'validateEmpleado debe fallar con campos vacíos');
+
+    // Test 2: buildRowsForSend con 1 referido
+    document.getElementById('empNombre').value='Alice';
+    document.getElementById('empCel').value='+57 3000000000';
+    document.getElementById('empGrado').value='A2';
+    referidos=[{nombre:'Bob', cel:'3001234567', grado:'B1'}];
+    const rows=buildRowsForSend();
+    console.assert(rows.length===2, 'Debe generar 2 filas (empleado + 1 referido)');
+    console.assert(rows[0][0]==='Alice' && rows[1][3]==='Alice', 'El jefe del referido debe ser el empleado');
+
+    // Test 3: orden de opciones de Grado BMG
+    const optsEmp=[...document.querySelectorAll('#empGrado option')].slice(1).map(o=>o.textContent.trim());
+    const optsRef=[...document.querySelectorAll('#refGrado option')].slice(1).map(o=>o.textContent.trim());
+    const expected=['A2','A3','B1','B2'];
+    console.assert(JSON.stringify(optsEmp)===JSON.stringify(expected), 'Orden en empGrado debe ser A2, A3, B1, B2');
+    console.assert(JSON.stringify(optsRef)===JSON.stringify(expected), 'Orden en refGrado debe ser A2, A3, B1, B2');
+
+    // Test 4: múltiples referidos -> longitud correcta y jefe propagado
+    document.getElementById('empNombre').value='Carol';
+    document.getElementById('empCel').value='+57 3111111111';
+    document.getElementById('empGrado').value='A3';
+    referidos=[{nombre:'Dan', cel:'3001111111', grado:'B1'}, {nombre:'Eve', cel:'3002222222', grado:'B2'}];
+    const rows2=buildRowsForSend();
+    console.assert(rows2.length===3, 'Debe generar 3 filas (empleado + 2 referidos)');
+    console.assert(rows2[1][3]==='Carol' && rows2[2][3]==='Carol', 'El jefe debe ser Carol en todos los referidos');
+
+    console.groupEnd();
+  }
+  if (typeof RUN_TESTS !== 'undefined' && RUN_TESTS) { runTests(); }
+
+  document.querySelectorAll('[data-numeric]').forEach(el=>{
+    el.addEventListener('input', ()=>{
+      el.value = el.value.replace(/\D/g,''); // deja solo 0-9
+    });
+  });
+  </script>
+</body>
+</html>
