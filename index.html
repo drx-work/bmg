@@ -127,7 +127,7 @@
             </div>
           </div>
           <div class="footer" style="margin-top:12px">
-            <button type="button" class="btn btn-add" id="navToRef">+ Agregar Referido</button>
+            <button type="button" class="btn btn-add" id="navToRef">+ Agregar Subordinado</button>
             <button type="button" class="btn btn-outline" id="navToList">Ver lista de referidos</button>
             <button type="button" class="btn btn-primary" id="btnSubmitFromEmp">Enviar información</button>
           </div>
@@ -156,7 +156,7 @@
             </div>
           </div>
           <div class="footer" style="margin-top:12px">
-            <button type="button" class="btn btn-add" id="btnAddRef">+ Agregar Referido</button>
+            <button type="button" class="btn btn-add" id="btnAddRef">+ Agregar Subordinado</button>
             <button type="button" class="btn btn-outline" id="navToList2">Ver lista de referidos</button>
             <button type="button" class="btn btn-outline" id="editEmployeeFromRef">Editar mis datos</button>
             <button type="button" class="btn btn-primary" id="btnSubmitFromRef">Enviar información</button>
@@ -194,7 +194,7 @@
           </div>
 
           <div class="footer" style="margin-top:12px">
-            <button type="button" class="btn btn-add" id="navToRef3">+ Agregar Referido</button>
+            <button type="button" class="btn btn-add" id="navToRef3">+ Agregar Subordinado</button>
             <div style="display:flex; gap:10px; flex-wrap:wrap">
               <button type="button" class="btn btn-outline" id="editEmployeeFromList">Editar mis datos</button>
               <button type="button" class="btn btn-outline" id="navToList3" disabled>Ver lista de referidos</button>
@@ -357,7 +357,7 @@
       referidos[editIndex] = { nombre, cel, grado };
       showToast('Referido actualizado.');
       editIndex = null;
-      btnAddRef.textContent = '+ Agregar Referido';
+      btnAddRef.textContent = '+ Agregar Subordinado';
     } else {
       referidos.push({nombre, cel, grado});
       showToast(`Referido agregado. Total: ${referidos.length}`);
@@ -552,13 +552,13 @@
   }
 
   // ======== Navegación / Acciones ========
-  document.getElementById('navToRef').onclick = ()=>{ clearRefForm(); editIndex=null; btnAddRef.textContent = '+ Agregar Referido'; nav('screen-ref'); };
+  document.getElementById('navToRef').onclick = ()=>{ clearRefForm(); editIndex=null; btnAddRef.textContent = '+ Agregar Subordinado'; nav('screen-ref'); };
   document.getElementById('navToList').onclick = ()=>{ renderList(); renderCards(); nav('screen-list'); };
 
   btnAddRef.onclick = addRefFromForm;
   document.getElementById('navToList2').onclick = ()=>{ renderList(); renderCards(); nav('screen-list'); };
 
-  document.getElementById('navToRef3').onclick = ()=>{ clearRefForm(); editIndex=null; btnAddRef.textContent = '+ Agregar Referido'; nav('screen-ref'); };
+  document.getElementById('navToRef3').onclick = ()=>{ clearRefForm(); editIndex=null; btnAddRef.textContent = '+ Agregar Subordinado'; nav('screen-ref'); };
   document.getElementById('editEmployeeFromRef').onclick = ()=> nav('screen-employee');
   document.getElementById('editEmployeeFromList').onclick = ()=> nav('screen-employee');
 
